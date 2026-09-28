@@ -1,0 +1,8 @@
+{
+  "is_monsoon_season": 0.2966814339160919,
+  "road_condition": 0.15682467818260193,
+  "soil_erodibility": 0.15665769577026367,
+  "past_incident_count": 0.1552247554063797,
+  "rainfall_mm": 0.134240984916687,
+  "slope_deg": 0.10037048161029816
+}

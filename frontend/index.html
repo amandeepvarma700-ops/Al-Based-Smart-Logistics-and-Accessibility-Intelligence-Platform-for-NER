@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Praneta — NER Logistics Console</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1512;
+      --panel: #121c18;
+      --panel-2: #17231d;
+      --line: #233028;
+      --text: #e9efe9;
+      --muted: #8fa398;
+      --safe: #3ecf8e;
+      --warn: #e8b95a;
+      --danger: #e2664a;
+      --accent: #5fd0c0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "IBM Plex Sans", system-ui, sans-serif;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      grid-template-rows: 64px 1fr;
+      grid-template-areas: "header header" "side map";
+    }
+
+    header {
+      grid-area: header;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    header .brand {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    header .brand span {
+      color: var(--accent);
+    }
+
+    header .sub {
+      color: var(--muted);
+      font-size: 13px;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    #side {
+      grid-area: side;
+      overflow-y: auto;
+      background: var(--panel);
+      border-right: 1px solid var(--line);
+      padding: 18px;
+    }
+
+    #map {
+      grid-area: map;
+    }
+
+    .card {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+      text-transform: none;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin: 8px 0 4px;
+    }
+
+    select,
+    input {
+      width: 100%;
+      padding: 7px 8px;
+      background: #0f1a15;
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .row>* {
+      flex: 1;
+    }
+
+    button {
+      margin-top: 10px;
+      width: 100%;
+      padding: 9px;
+      border-radius: 6px;
+      border: none;
+      background: var(--accent);
+      color: #06201a;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    button:hover {
+      filter: brightness(1.08);
+    }
+
+    button.secondary {
+      background: #1d2a24;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .result {
+      font-size: 13px;
+      line-height: 1.55;
+      margin-top: 10px;
+    }
+
+    .result .k {
+      color: var(--muted);
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-family: "IBM Plex Mono", monospace;
+      font-weight: 500;
+    }
+
+    .pill.open {
+      background: rgba(62, 207, 142, .15);
+      color: var(--safe);
+    }
+
+    .pill.restricted {
+      background: rgba(232, 185, 90, .15);
+      color: var(--warn);
+    }
+
+    .pill.high_risk {
+      background: rgba(226, 102, 74, .15);
+      color: var(--danger);
+    }
+
+    .legend {
+      display: flex;
+      gap: 14px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .legend .dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--line);
+      margin: 16px 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="brand">Praneta<span>.</span></div>
+    <div class="sub"> created with ❤️, by Team AROKAH </div>
+  </header>
+
+  <div id="side">
+
+    <div class="card">
+      <h2>ROUTE PLANNER</h2>
+      <div class="row">
+        <div>
+          <label>From</label>
+          <select id="startNode"></select>
+        </div>
+        <div>
+          <label>To</label>
+          <select id="endNode"></select>
+        </div>
+      </div>
+      <label>Risk aversion: <span id="riskVal">0.5</span></label>
+      <input type="range" id="riskAversion" min="0" max="1" step="0.1" value="0.5" />
+      <button onclick="planRoute()">Compute route</button>
+      <div class="result" id="routeResult"></div>
+    </div>
+
+    <div class="card">
+      <h2>CONVOY FORMATION</h2>
+      <div class="result">Demo group: 3 vehicles requesting GAU→IMP and GAU→SHL at staggered ready-times.</div>
+      <button class="secondary" onclick="runConvoyDemo()">Run convoy grouping demo</button>
+      <div class="result" id="convoyResult"></div>
+    </div>
+
+    <div class="card">
+      <h2>CRITICALITY TRIAGE</h2>
+      <label>Safe window remaining (minutes)</label>
+      <input type="number" id="safeWindow" value="30" />
+      <div class="result">Demo queue: Tier 1 (15 min ETA), Tier 2 (10 min ETA), Tier 3 (20 min ETA).</div>
+      <button class="secondary" onclick="runTriageDemo()">Run triage decision</button>
+      <div class="result" id="triageResult"></div>
+    </div>
+
+    <div class="card">
+      <h2>RISK PREDICTION (XGBoost)</h2>
+      <div class="row">
+        <div><label>Rainfall (mm)</label><input id="rainfall" type="number" value="45" /></div>
+        <div><label>Slope (°)</label><input id="slope" type="number" value="20" /></div>
+      </div>
+      <div class="row">
+        <div><label>Soil erodibility (0-1)</label><input id="soil" type="number" step="0.1" value="0.5" /></div>
+        <div><label>Past incidents</label><input id="incidents" type="number" value="1" /></div>
+      </div>
+      <div class="row">
+        <div><label>Road condition (1-5)</label><input id="condition" type="number" value="3" /></div>
+        <div><label>Monsoon season?</label>
+          <select id="monsoon">
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="predictRisk()">Predict risk score</button>
+      <div class="result" id="riskResult"></div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--safe)"></span>Open</span>
+      <span><span class="dot" style="background:var(--warn)"></span>Restricted</span>
+      <span><span class="dot" style="background:var(--danger)"></span>High risk</span>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <script>
+    const API = "http://localhost:5000/api";
+    let map, network, routeLayer, nodeLayerGroup;
+    let networkEdges = [];
+
+    // Cache of real road geometry fetched from OSRM's free public routing
+    // service, keyed by "FROMID-TOID". Avoids re-fetching the same segment
+    // twice, and lets us reuse per-edge geometry when stitching a full route.
+    const geometryCache = {};
+
+    /**
+     * Fetch real driving-road geometry between two points from OSRM's free,
+     * no-key-required public demo server. Returns an array of [lat, lon]
+     * pairs (Leaflet order), or null if the request fails for any reason
+     * (rate limit, no internet, no road found) — callers should fall back
+     * to a straight line when this returns null, so the demo never breaks.
+     */
+    async function fetchRoadGeometry(a, b) {
+      const key = `${a.id || a.name}-${b.id || b.name}`;
+      if (geometryCache[key]) return geometryCache[key];
+
+      const url = `https://router.project-osrm.org/route/v1/driving/`
+        + `${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.code !== "Ok" || !data.routes || !data.routes.length) return null;
+        // OSRM returns [lon, lat] pairs (GeoJSON order) — flip to [lat, lon] for Leaflet
+        const latlngs = data.routes[0].geometry.coordinates.map(([lon, lat]) => [lat, lon]);
+        geometryCache[key] = latlngs;
+        return latlngs;
+      } catch (err) {
+        console.warn("OSRM geometry fetch failed, falling back to straight line:", err);
+        return null;
+      }
+    }
+
+    function statusColor(status) {
+      if (status === "high_risk") return "#e2664a";
+      if (status === "restricted") return "#e8b95a";
+      return "#3ecf8e";
+    }
+
+    async function init() {
+      map = L.map('map', { zoomControl: true }).setView([25.6, 93.0], 6);
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '&copy; Esri', maxZoom: 12
+      }).addTo(map);
+
+      const res = await fetch(`${API}/roads`);
+      network = await res.json();
+
+      const nodeById = Object.fromEntries(network.nodes.map(n => [n.id, n]));
+
+      networkEdges = [];
+      network.edges.forEach(e => {
+        const a = nodeById[e.from], b = nodeById[e.to];
+        // Draw a straight placeholder immediately so the map isn't empty
+        // while we wait on the network, then swap in real road geometry
+        // (curved, following actual roads) as soon as OSRM responds.
+        const layer = L.polyline([[a.lat, a.lon], [b.lat, b.lon]], {
+          color: statusColor(e.status), weight: 4, opacity: 0.85
+        }).addTo(map).bindPopup(`${a.name} ↔ ${b.name}<br>Risk: ${e.risk} · ${e.status}`);
+
+        networkEdges.push(layer);
+
+        fetchRoadGeometry({ ...a, id: e.from }, { ...b, id: e.to }).then(geom => {
+          if (geom) layer.setLatLngs(geom);
+        });
+      });
+
+      if (nodeLayerGroup) map.removeLayer(nodeLayerGroup);
+      nodeLayerGroup = L.featureGroup().addTo(map);
+
+      network.nodes.forEach(n => {
+        L.circleMarker([n.lat, n.lon], { radius: 6, color: "#e9efe9", fillColor: "#5fd0c0", fillOpacity: 1, weight: 1 })
+          .addTo(nodeLayerGroup).bindPopup(`<b>${n.name}</b>`);
+      });
+
+      const startSel = document.getElementById('startNode');
+      const endSel = document.getElementById('endNode');
+      network.nodes.forEach(n => {
+        startSel.innerHTML += `<option value="${n.id}">${n.name}</option>`;
+        endSel.innerHTML += `<option value="${n.id}">${n.name}</option>`;
+      });
+      startSel.value = "GAU";
+      endSel.value = "IMP";
+
+      const riskAversionInput = document.getElementById('riskAversion');
+      riskAversionInput.addEventListener('input', e => {
+        document.getElementById('riskVal').innerText = e.target.value;
+        planRoute();
+      });
+      riskAversionInput.addEventListener('change', () => {
+        planRoute();
+      });
+    }
+
+    async function planRoute() {
+      const start = document.getElementById('startNode').value;
+      const end = document.getElementById('endNode').value;
+      const riskAversion = document.getElementById('riskAversion').value;
+      const res = await fetch(`${API}/route?start=${start}&end=${end}&risk_aversion=${riskAversion}`);
+      const data = await res.json();
+      const box = document.getElementById('routeResult');
+
+      if (data.error) { box.innerHTML = `<span style="color:var(--danger)">${data.error}</span>`; return; }
+
+      // Dim background network layer opacity to 0.15 on route computation
+      networkEdges.forEach(layer => layer.setStyle({ opacity: 0.15 }));
+
+      if (routeLayer) map.removeLayer(routeLayer);
+      routeLayer = L.featureGroup().addTo(map);
+
+      const points = data.coordinates;
+      const segments = data.segments || [];
+
+      const segmentPromises = points.slice(0, -1).map(async (p, i) => {
+        const seg = segments[i];
+        const segColor = statusColor(seg ? seg.status : "open");
+        const nextP = points[i + 1];
+
+        const basePoly = L.polyline([[p.lat, p.lon], [nextP.lat, nextP.lon]], {
+          color: segColor,
+          weight: 8,
+          opacity: 1,
+          interactive: false
+        }).addTo(routeLayer);
+
+        const dashPoly = L.polyline([[p.lat, p.lon], [nextP.lat, nextP.lon]], {
+          color: "#ffffff",
+          weight: 3,
+          dashArray: "6 6",
+          opacity: 0.9,
+          interactive: false
+        }).addTo(routeLayer);
+
+        const fromNode = { ...p, id: seg ? seg.from : (data.path ? data.path[i] : undefined) };
+        const toNode = { ...nextP, id: seg ? seg.to : (data.path ? data.path[i + 1] : undefined) };
+
+        const geom = await fetchRoadGeometry(fromNode, toNode);
+        if (geom) {
+          basePoly.setLatLngs(geom);
+          dashPoly.setLatLngs(geom);
+        }
+      });
+
+      if (nodeLayerGroup) nodeLayerGroup.bringToFront();
+      map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
+
+      await Promise.all(segmentPromises);
+      if (routeLayer.getLayers().length > 0) {
+        map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
+      }
+      if (nodeLayerGroup) nodeLayerGroup.bringToFront();
+
+      box.innerHTML = `
+    <div><span class="k">Path:</span> ${data.path.join(' → ')}</div>
+    <div><span class="k">Distance:</span> ${data.total_distance_km} km</div>
+    <div><span class="k">Time:</span> ${data.total_time_min} min</div>
+    <div><span class="k">Max risk on route:</span> ${data.max_risk}</div>
+  `;
+    }
+
+    async function runConvoyDemo() {
+      const body = {
+        vehicle_requests: [
+          { vehicle_id: "V1", start: "GAU", end: "IMP", ready_time_min: 0, tier: 2 },
+          { vehicle_id: "V2", start: "GAU", end: "IMP", ready_time_min: 20, tier: 3 },
+          { vehicle_id: "V3", start: "GAU", end: "SHL", ready_time_min: 0, tier: 1 },
+        ],
+        time_window_min: 60, risk_aversion: 0.5
+      };
+      const res = await fetch(`${API}/convoy`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const data = await res.json();
+      document.getElementById('convoyResult').innerHTML = data.convoys.map(c =>
+        `<div><b>${c.start} → ${c.end}</b>: ${c.vehicle_count} vehicle(s) [${c.vehicle_ids.join(', ')}] → one shared route, ${c.route.total_time_min} min</div>`
+      ).join('');
+    }
+
+    async function runTriageDemo() {
+      const safe_window_min = Number(document.getElementById('safeWindow').value);
+      const body = {
+        pending_vehicles: [
+          { vehicle_id: "V1", tier: 1, eta_min: 15 },
+          { vehicle_id: "V2", tier: 3, eta_min: 20 },
+          { vehicle_id: "V3", tier: 2, eta_min: 10 },
+        ],
+        safe_window_min
+      };
+      const res = await fetch(`${API}/triage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const data = await res.json();
+      const box = document.getElementById('triageResult');
+      box.innerHTML =
+        data.dispatched.map(v => `<div><span class="pill open">DISPATCH</span> ${v.vehicle_id} (Tier ${v.tier})</div>`).join('') +
+        data.held.map(v => `<div><span class="pill high_risk">HOLD</span> ${v.vehicle_id} (Tier ${v.tier}) — ${v.reason}</div>`).join('');
+    }
+
+    async function predictRisk() {
+      const body = {
+        rainfall_mm: Number(document.getElementById('rainfall').value),
+        slope_deg: Number(document.getElementById('slope').value),
+        soil_erodibility: Number(document.getElementById('soil').value),
+        past_incident_count: Number(document.getElementById('incidents').value),
+        road_condition: Number(document.getElementById('condition').value),
+        is_monsoon_season: Number(document.getElementById('monsoon').value),
+      };
+      const res = await fetch(`${API}/predict-risk`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const data = await res.json();
+      document.getElementById('riskResult').innerHTML =
+        `<div><span class="k">Predicted risk:</span> <b>${data.risk_score}</b></div>
+     <div><span class="k">Source:</span> ${data.source}</div>`;
+    }
+
+    init();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,38 @@
+{
+  "nodes": [
+    {"id": "GAU", "name": "Guwahati",        "lat": 26.1445, "lon": 91.7362},
+    {"id": "SHL", "name": "Shillong",        "lat": 25.5788, "lon": 91.8933},
+    {"id": "TEZ", "name": "Tezpur",          "lat": 26.6528, "lon": 92.7926},
+    {"id": "NLK", "name": "North Lakhimpur", "lat": 27.2350, "lon": 94.1050},
+    {"id": "ITA", "name": "Itanagar",        "lat": 27.0844, "lon": 93.6053},
+    {"id": "DIM", "name": "Dimapur",         "lat": 25.9091, "lon": 93.7276},
+    {"id": "KOH", "name": "Kohima",          "lat": 25.6751, "lon": 94.1086},
+    {"id": "IMP", "name": "Imphal",          "lat": 24.8170, "lon": 93.9368},
+    {"id": "SIL", "name": "Silchar",         "lat": 24.8333, "lon": 92.7789},
+    {"id": "AIZ", "name": "Aizawl",          "lat": 23.7271, "lon": 92.7176},
+    {"id": "AGT", "name": "Agartala",        "lat": 23.8315, "lon": 91.2868},
+    {"id": "JOR", "name": "Jorhat",          "lat": 26.7509, "lon": 94.2037},
+    {"id": "NGA", "name": "Nagaon",          "lat": 26.3452, "lon": 92.6840}
+  ],
+  "edges": [
+    {"id": "E1",  "from": "GAU", "to": "SHL", "distance_km": 100, "base_time_min": 180, "risk": 0.35, "status": "open"},
+    {"id": "E2",  "from": "GAU", "to": "TEZ", "distance_km": 110, "base_time_min": 120, "risk": 0.85, "status": "high_risk"},
+    {"id": "E3",  "from": "TEZ", "to": "NLK", "distance_km": 210, "base_time_min": 300, "risk": 0.55, "status": "restricted"},
+    {"id": "E4",  "from": "NLK", "to": "ITA", "distance_km": 60,  "base_time_min": 120, "risk": 0.65, "status": "restricted"},
+    {"id": "E5",  "from": "GAU", "to": "DIM", "distance_km": 260, "base_time_min": 360, "risk": 0.30, "status": "open"},
+    {"id": "E6",  "from": "DIM", "to": "KOH", "distance_km": 75,  "base_time_min": 150, "risk": 0.40, "status": "open"},
+    {"id": "E7",  "from": "KOH", "to": "IMP", "distance_km": 145, "base_time_min": 240, "risk": 0.70, "status": "high_risk"},
+    {"id": "E8",  "from": "DIM", "to": "IMP", "distance_km": 215, "base_time_min": 330, "risk": 0.50, "status": "open"},
+    {"id": "E9",  "from": "GAU", "to": "SIL", "distance_km": 300, "base_time_min": 420, "risk": 0.45, "status": "open"},
+    {"id": "E10", "from": "SIL", "to": "AIZ", "distance_km": 180, "base_time_min": 300, "risk": 0.75, "status": "high_risk"},
+    {"id": "E11", "from": "SIL", "to": "AGT", "distance_km": 160, "base_time_min": 240, "risk": 0.25, "status": "open"},
+    {"id": "E12", "from": "SHL", "to": "SIL", "distance_km": 200, "base_time_min": 280, "risk": 0.60, "status": "restricted"},
+    {"id": "E13", "from": "DIM", "to": "TEZ", "distance_km": 170, "base_time_min": 240, "risk": 0.30, "status": "open"},
+    {"id": "E14", "from": "DIM", "to": "JOR", "distance_km": 120, "base_time_min": 180, "risk": 0.25, "status": "open"},
+    {"id": "E15", "from": "JOR", "to": "NLK", "distance_km": 85,  "base_time_min": 130, "risk": 0.30, "status": "open"},
+    {"id": "E16", "from": "DIM", "to": "NLK", "distance_km": 180, "base_time_min": 260, "risk": 0.35, "status": "open"},
+    {"id": "E17", "from": "TEZ", "to": "JOR", "distance_km": 155, "base_time_min": 220, "risk": 0.25, "status": "open"},
+    {"id": "E18", "from": "GAU", "to": "NGA", "distance_km": 115, "base_time_min": 90,  "risk": 0.10, "status": "open"},
+    {"id": "E19", "from": "NGA", "to": "TEZ", "distance_km": 65,  "base_time_min": 90,  "risk": 0.10, "status": "open"}
+  ]
+}
